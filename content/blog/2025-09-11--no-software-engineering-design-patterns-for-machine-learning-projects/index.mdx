@@ -1,0 +1,269 @@
+---
+title: Why I Stopped Using Design Patterns in ML Research Projects
+slug: no-software-engineering-design-patterns-for-machine-learning-projects
+description: How over-engineered code architectures hurt researcher productivity and why simple, self-contained experiments work better for teams that context-switch frequently
+date: 2025-09-11
+lastUpdated: 2025-09-11
+tags:
+  - Coding
+---
+
+
+## TL;DR
+After experiencing the friction that complex software engineering design patterns
+created for researchers switching between projects, I learned that over-architected codebases
+can hinder rather than help machine learning development. The cognitive overhead of
+understanding intricate design patterns and dependencies made it difficult for researchers to
+quickly resume work and contribute effectively. By simplifying our approach and creating focused
+sub-projects with minimal architectural complexity, we enabled researchers to concentrate on
+experimentation rather than code navigation, ultimately improving both productivity and research
+velocity.
+
+## The Problem: Over-Engineering for Research
+
+When I first started working with ML researchers, I made the classic software engineer mistake: I assumed that good software engineering practices would automatically translate to better research productivity. I built elaborate abstractions, implemented design patterns, and created what I thought was a maintainable, extensible codebase.
+
+Here's what our "well-architected" ML pipeline looked like:
+
+```python
+# models/base.py
+from abc import ABC, abstractmethod
+from typing import Dict, Any, Optional
+from dataclasses import dataclass
+
+@dataclass
+class ModelConfig:
+    learning_rate: float
+    batch_size: int
+    num_epochs: int
+    optimizer: str
+
+class BaseModel(ABC):
+    def __init__(self, config: ModelConfig):
+        self.config = config
+        self.optimizer = self._create_optimizer()
+        
+    @abstractmethod
+    def forward(self, x):
+        pass
+    
+    @abstractmethod
+    def _create_optimizer(self):
+        pass
+    
+    @abstractmethod
+    def loss_function(self, predictions, targets):
+        pass
+
+# models/transformer.py
+class TransformerModel(BaseModel):
+    def __init__(self, config: ModelConfig, vocab_size: int, d_model: int):
+        super().__init__(config)
+        self.vocab_size = vocab_size
+        self.d_model = d_model
+        self.layers = self._build_layers()
+    
+    def forward(self, x):
+        # Complex implementation here...
+        pass
+    
+    def _create_optimizer(self):
+        # Factory pattern for optimizer creation
+        optimizers = {
+            'adam': torch.optim.Adam,
+            'sgd': torch.optim.SGD,
+        }
+        return optimizers[self.config.optimizer](
+            self.parameters(), 
+            lr=self.config.learning_rate
+        )
+```
+
+```python
+# training/trainer.py
+class TrainingStrategy(ABC):
+    @abstractmethod
+    def train_epoch(self, model, dataloader):
+        pass
+
+class StandardTrainingStrategy(TrainingStrategy):
+    def train_epoch(self, model, dataloader):
+        # Standard training loop
+        pass
+
+class DistributedTrainingStrategy(TrainingStrategy):
+    def train_epoch(self, model, dataloader):
+        # Distributed training logic
+        pass
+
+class Trainer:
+    def __init__(self, model: BaseModel, strategy: TrainingStrategy):
+        self.model = model
+        self.strategy = strategy
+        
+    def train(self, dataloader):
+        for epoch in range(self.model.config.num_epochs):
+            self.strategy.train_epoch(self.model, dataloader)
+```
+
+This looked great on paper. It was modular, extensible, and followed SOLID principles. But in practice, it created a nightmare for researchers.
+
+## The Context Switching Problem
+
+The real issue became apparent when researchers would return to our codebase after working on other projects for weeks or months. Here's what would happen:
+
+1. **Cognitive Load** - They'd spend hours just remembering how our abstractions worked
+2. **Simple Changes Became Complex** - Adding a new loss function required understanding the entire inheritance hierarchy  
+3. **Experimentation Friction** - Testing a quick idea meant navigating through multiple files and interfaces
+
+A researcher once told me: *"I just want to try a different attention mechanism, but I have to understand your entire BaseModel class first."*
+
+## The Simple Solution
+
+We simplified dramatically. Instead of one monolithic, "well-architected" codebase, we created focused sub-projects. Here's what the same functionality looked like after simplification:
+
+```python
+# experiments/transformer_sentiment/model.py
+import torch
+import torch.nn as nn
+from transformers import AutoTokenizer, AutoModel
+
+def create_model(num_classes=2):
+    base_model = AutoModel.from_pretrained('bert-base-uncased')
+    classifier = nn.Linear(base_model.config.hidden_size, num_classes)
+    return base_model, classifier
+
+def train_model(base_model, classifier, train_loader, num_epochs=3):
+    optimizer = torch.optim.Adam(
+        list(base_model.parameters()) + list(classifier.parameters()),
+        lr=2e-5
+    )
+    
+    for epoch in range(num_epochs):
+        for batch in train_loader:
+            optimizer.zero_grad()
+            
+            outputs = base_model(**batch['input'])
+            logits = classifier(outputs.last_hidden_state[:, 0, :])
+            loss = nn.CrossEntropyLoss()(logits, batch['labels'])
+            
+            loss.backward()
+            optimizer.step()
+
+if __name__ == "__main__":
+    # Simple script that just works
+    base_model, classifier = create_model()
+    # train_model(base_model, classifier, train_loader)
+```
+
+```python
+# experiments/gpt_finetuning/train.py
+from transformers import GPT2LMHeadModel, GPT2Tokenizer, Trainer, TrainingArguments
+
+def main():
+    model = GPT2LMHeadModel.from_pretrained('gpt2')
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+    tokenizer.pad_token = tokenizer.eos_token
+    
+    # Load your dataset here
+    dataset = load_dataset()
+    
+    training_args = TrainingArguments(
+        output_dir='./results',
+        num_train_epochs=3,
+        per_device_train_batch_size=4,
+        logging_steps=100,
+    )
+    
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=dataset,
+    )
+    
+    trainer.train()
+
+if __name__ == "__main__":
+    main()
+```
+
+## What Changed and Why It Worked
+
+### Self-Contained Experiments
+Each experiment lived in its own directory with minimal dependencies. Researchers could understand the entire codebase in minutes, not hours.
+
+### Copy-Paste Friendly
+Instead of inheritance and abstractions, we embraced duplication. Want to try a different model? Copy the experiment folder and modify it. This felt wrong as a software engineer, but it worked incredibly well for research.
+
+### Flat Structure
+```
+experiments/
+├── sentiment_analysis/
+│   ├── model.py
+│   ├── train.py
+│   └── requirements.txt
+├── text_generation/
+│   ├── model.py
+│   ├── train.py
+│   └── requirements.txt
+└── question_answering/
+    ├── model.py
+    ├── train.py
+    └── requirements.txt
+```
+
+### Explicit Over Clever
+```python
+# Instead of this "clever" factory pattern:
+def create_optimizer(name, params, lr):
+    optimizers = {
+        'adam': torch.optim.Adam,
+        'sgd': torch.optim.SGD,
+        'adamw': torch.optim.AdamW,
+    }
+    return optimizers[name](params, lr=lr)
+
+# We did this:
+optimizer = torch.optim.Adam(model.parameters(), lr=2e-5)
+```
+
+## When Design Patterns Still Make Sense
+
+I'm not advocating for abandoning all software engineering principles. Design patterns still have their place in ML projects when:
+
+1. You have a stable team that works on the same codebase long-term
+2. The codebase is production-critical and needs robust error handling  
+3. You're building ML infrastructure rather than running experiments
+
+For production ML systems, you absolutely want proper abstractions:
+
+```python
+# This makes sense for production systems
+class ProductionModelService:
+    def __init__(self, model_registry: ModelRegistry, 
+                 feature_store: FeatureStore):
+        self.model_registry = model_registry
+        self.feature_store = feature_store
+        
+    def predict(self, request: PredictionRequest) -> PredictionResponse:
+        model = self.model_registry.get_model(request.model_id)
+        features = self.feature_store.get_features(request.feature_keys)
+        return model.predict(features)
+```
+
+## The Lesson: Match Your Architecture to Your Team
+
+The key insight is that software architecture should match your team's workflow, not the other way around. For researchers who context-switch frequently:
+
+- Simplicity beats cleverness
+- Explicitness beats abstraction  
+- Copy-paste beats inheritance
+- Self-contained beats modular
+
+Your codebase should reduce cognitive load, not increase it. Sometimes the "worst" code from a software engineering perspective is the best code for your team's productivity.
+
+## Conclusion
+
+Good software engineering practices are tools, not rules. When working with researchers, data scientists, or anyone who frequently switches contexts, consider whether your abstractions are helping or hurting. Sometimes the most maintainable code is the code that's easiest to understand when you return to it months later.
+
+The goal isn't to write the most elegant code—it's to enable your team to do their best work with the least friction.
