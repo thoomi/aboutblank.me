@@ -1,25 +1,14 @@
-# Astro Theme: Minimal Blog
+# aboutblank.me
 
-Welcome to **Astro Theme: Minimal Blog**, an ideal option to start sharing your ideas. It's easy to set up and features everything you'd need for a blog.
+A small blog about the challenges of a simple engineers life.
 
-[**Demo Website**](https://astro-theme-minimal-blog.lekoarts.de)
+[**aboutblank.me**](https://aboutblank.me)
 
-## ✨ Features
-
-- Write blog posts with MDX
-- Styled with [Tailwind](https://tailwindcss.com/)
-- Code blocks powered by [Expressive Code](https://expressive-code.com/)
-- Custom asides component
-- Live coding powered by [Sandpack](https://github.com/codesandbox/sandpack)
-- RSS, Sitemap
-- Light/Dark/System color mode toggle
-- Add tags to your blog posts
-- [Pagefind](https://pagefind.app/) search
 
 ## 🚀 Getting started
 
 1. **Important:** Ensure that [pnpm](https://pnpm.io/installation) is installed
-1. Clone the [astro-theme-minimal-blog](https://github.com/LekoArts/astro-theme-minimal-blog) repository.
+1. Clone the [aboutblank.me](https://github.com/thoomi/aboutblank.me.git) repository.
 1. Install dependencies.
    ```shell
    pnpm install
@@ -29,7 +18,7 @@ Welcome to **Astro Theme: Minimal Blog**, an ideal option to start sharing your 
    pnpm dev
    ```
 
-## 📝 Using & modifying this theme
+## 📝 How to
 
 ### Add content
 
@@ -80,43 +69,3 @@ tags:
 searchIndex: true
 image: https://absolute-link.google.com/image.png
 ```
-
-### Custom MDX components
-
-#### `<Aside>`
-
-```md
-:::note
-Text
-:::
-
-:::caution[Watch out!]
-Text
-:::
-
-:::tip
-Text
-:::
-
-:::danger
-Text
-:::
-```
-
-Read the [Aside Example](./content/blog/2025-04-02--mdx-asides/index.mdx) to learn more.
-
-#### `<Playground>`
-
-````md
-<Playground template="react">
-
-```js name=App.js active
-export default function App() {
-  return <h1>Hello World</h1>
-}
-```
-
-</Playground>
-````
-
-Read the [Playground Example](./content/blog/2025-06-23--live-coding-with-sandpack/index.mdx) to learn more.
