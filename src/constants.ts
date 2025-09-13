@@ -11,15 +11,15 @@ export const SITE: Record<string, string> = {
 	/**
 	 * Site-wide title
 	 */
-	title: 'Thomas Blank',
+	title: 'Thomas` Blog',
 	/**
 	 * Used on index page and as a fallback if no title is set
 	 */
-	titleDefault: 'A software engineering blog',
+	titleDefault: 'Just a blank software engineering blog',
 	/**
 	 * Used in meta tags, RSS feed, and other places
 	 */
-	description: 'Minimal and personal blog about software engineering and the adventures of life.',
+	description: 'Expect nothing but an occasional post about the messy reality of machine learning in production.',
 	/**
 	 * Language used in the <html> tag
 	 */

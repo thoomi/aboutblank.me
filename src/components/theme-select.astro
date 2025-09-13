@@ -13,12 +13,12 @@ import Icon from './icon.astro'
 	<label class="relative flex items-center gap-2">
 		<span class="sr-only">Select theme</span>
 		<Icon name="laptop" class="icon label-icon" />
-		<select value="auto" autocomplete="off">
+		<select value="light" autocomplete="off">
 			{
 				[
 					{ label: 'Dark', selected: false, value: 'dark' },
-					{ label: 'Light', selected: false, value: 'light' },
-					{ label: 'Auto', selected: true, value: 'auto' },
+					{ label: 'Light', selected: true, value: 'light' },
+					{ label: 'Auto', selected: false, value: 'auto' },
 				].map(({ value, selected, label }) => <option value={value} selected={selected} set:html={label} />)
 			}
 		</select>
