@@ -57,6 +57,13 @@ export const HEADER: Header = {
 	 */
 	external: [
 		{
+			title: 'Github',
+			url: 'https://github.com/thoomi',
+			props: {
+				target: '_blank',
+			},
+		},
+		{
 			title: 'CV',
 			url: 'https://cv.aboutblank.me',
 			props: {
